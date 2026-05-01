@@ -73,14 +73,14 @@ function ProjectCard({
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover:shadow-2xl transition-shadow duration-300 flex flex-col">
       {/* Header */}
-      <div className="bg-gradient-to-r from-violet-600 to-violet-800 p-6 text-white">
+      <div className="bg-gradient-to-r from-cyan-600 to-violet-800 p-6 text-white">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <h3 className={`font-bold mb-2 ${featured ? "text-xl" : "text-lg"}`}>
               {project.title}
             </h3>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-200 text-violet-800">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-200 text-violet-800">
                 {project.status}
               </span>
               {project.featured && (
@@ -132,7 +132,7 @@ function ProjectCard({
             {project.technologies.map((tech) => (
               <span
                 key={tech}
-                className="px-3 py-1 bg-violet-100 text-violet-800 text-sm rounded-full font-medium"
+                className="px-3 py-1 bg-cyan-100 text-violet-800 text-sm rounded-full font-medium"
               >
                 {tech}
               </span>
@@ -151,7 +151,7 @@ function ProjectCard({
           </a>
           <a
             href={project.live_url}
-            className="flex-1 bg-violet-600 text-white text-center py-2 px-4 rounded-lg hover:bg-violet-700 transition-colors font-medium text-sm"
+            className="flex-1 bg-cyan-600 text-white text-center py-2 px-4 rounded-lg hover:bg-violet-700 transition-colors font-medium text-sm"
             target="_blank"
             rel="noopener noreferrer"
           >

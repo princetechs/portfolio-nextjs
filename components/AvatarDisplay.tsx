@@ -3,19 +3,8 @@
 /**
  * Live2D Avatar — CDN script loading (pixi.js v6 + pixi-live2d-display)
  *
- * Script load order (each depends on the previous):
- *   1. pixi.js          → window.PIXI
- *   2. live2d.min.js    → window.Live2D  (Cubism 2 runtime)
- *   3. live2dcubismcore → window.Live2DCubismCore (Cubism 4 runtime)
- *   4. pixi-live2d-display → window.PIXI.live2d.Live2DModel
- *
- * Lip-sync architecture:
- *   - `speak()` sets mouthTarget ref based on word vowel density via onboundary
- *   - PixiJS LOW-priority ticker lerps mouthSmooth → mouthTarget each frame,
- *     then writes the result. LOW priority runs AFTER the motion system
- *     (NORMAL priority), so our write is the final one before each render.
- *   - This eliminates the race condition where setInterval writes get
- *     overwritten by the motion system mid-frame.
+ * Lip-sync: speak() -> Web Speech API onboundary -> vowelScore -> mouthTarget
+ * -> LOW-priority PixiJS ticker lerps & writes ParamMouthOpenY each frame.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -26,10 +15,8 @@ const CUBISM2_URL     = "https://cdn.jsdelivr.net/gh/dylanNew/live2d@master/webg
 const CUBISM4_URL     = "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js";
 const LIVE2D_DISP_URL = "https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js";
 
-// Mark — official Live2D Cubism 4 adult male sample model (self-hosted)
 const MODEL_URL = "/mark/Mark.model3.json";
-
-const MOUTH_IDS = ["PARAM_MOUTH_OPEN_Y", "ParamMouthOpenY", "PARAM_MOUTH_OPEN"];
+const MOUTH_PARAM_ID = "ParamMouthOpenY";
 
 function loadScript(src: string, alreadyLoaded?: () => boolean): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -45,28 +32,27 @@ function loadScript(src: string, alreadyLoaded?: () => boolean): Promise<void> {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function writeMouthParam(model: any, value: number) {
+  if (!model) return;
+  const v = Math.max(0, Math.min(1, value));
   const core = model?.internalModel?.coreModel;
   if (!core) return;
-  const v = Math.max(0, Math.min(1, value));
+
   if (typeof core.setParameterValueById === "function") {
-    for (const id of MOUTH_IDS) try { core.setParameterValueById(id, v); } catch { /**/ }
+    try { core.setParameterValueById(MOUTH_PARAM_ID, v); } catch { /**/ }
     return;
   }
   if (typeof core.setParamFloat === "function") {
-    for (const id of MOUTH_IDS) try { core.setParamFloat(id, v); } catch { /**/ }
+    try { core.setParamFloat(MOUTH_PARAM_ID, v); } catch { /**/ }
     return;
   }
   if (typeof core.getParameterIndex === "function") {
-    for (const id of MOUTH_IDS) {
-      try {
-        const idx: number = core.getParameterIndex(id);
-        if (idx >= 0) core.setParameterValueByIndex(idx, v);
-      } catch { /**/ }
-    }
+    try {
+      const idx: number = core.getParameterIndex(MOUTH_PARAM_ID);
+      if (idx >= 0) core.setParameterValueByIndex(idx, v);
+    } catch { /**/ }
   }
 }
 
-/** Estimate mouth openness from a word — higher vowel density = more open. */
 function vowelScore(word: string): number {
   const w = word.replace(/[^a-zA-Z]/g, "").toLowerCase();
   if (!w.length) return 0.05;
@@ -76,22 +62,22 @@ function vowelScore(word: string): number {
 
 export interface AvatarDisplayProps {
   onReady?: (speak: (text: string) => void) => void;
+  darkMode?: boolean;
 }
 
-export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
+export default function AvatarDisplay({ onReady, darkMode }: AvatarDisplayProps) {
   const mountRef     = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const appRef       = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const modelRef     = useRef<any>(null);
   const isSpeaking   = useRef(false);
-  // Ticker reads these refs — speak() only writes them
-  const mouthTarget  = useRef(0);   // desired mouth openness [0, 1]
-  const mouthSmooth  = useRef(0);   // current smoothed value (what ticker writes)
+  const mouthTarget  = useRef(0);
+  const mouthSmooth  = useRef(0);
   const wordTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [loading,  setLoading]  = useState(true);
-  const [loadMsg,  setLoadMsg]  = useState("Initializing…");
+  const [loadMsg,  setLoadMsg]  = useState("Initializing...");
   const [progress, setProgress] = useState(0);
   const [fallback, setFallback] = useState(false);
   const [errMsg,   setErrMsg]   = useState("");
@@ -107,49 +93,35 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
     stopSpeaking();
 
-    const utt    = new SpeechSynthesisUtterance(text);
-    utt.rate     = 0.9;
-    utt.pitch    = 0.95;   // slightly lower pitch — male voice
-    utt.volume   = 0.9;
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.rate = 0.9; utt.pitch = 0.95; utt.volume = 0.9;
 
-    // Prefer a male English voice
     const voices = window.speechSynthesis.getVoices();
-    const voice  =
+    const voice =
       voices.find((v) => v.lang.startsWith("en") && /male|man/i.test(v.name)) ??
       voices.find((v) => v.lang.startsWith("en-US")) ??
       voices.find((v) => v.lang.startsWith("en")) ??
       voices[0];
     if (voice) utt.voice = voice;
 
-    // onboundary fires per word in Chrome/Edge — use vowel density of each
-    // word to drive how wide the mouth opens for that syllable group.
     utt.onboundary = (e: SpeechSynthesisEvent) => {
       if (e.name !== "word") return;
       if (wordTimerRef.current) clearTimeout(wordTimerRef.current);
       const word = text.slice(e.charIndex, e.charIndex + (e.charLength ?? 5));
       mouthTarget.current = vowelScore(word);
-      // After the word finishes, relax to near-closed (natural breath gap)
       const holdMs = Math.max(70, ((e.charLength ?? 4) * 55) / utt.rate);
-      wordTimerRef.current = setTimeout(() => {
-        mouthTarget.current = 0.04;
-      }, holdMs);
+      wordTimerRef.current = setTimeout(() => { mouthTarget.current = 0.04; }, holdMs);
     };
 
-    utt.onstart = () => {
-      isSpeaking.current  = true;
-      mouthTarget.current = 0.22; // pre-open as speech starts
-    };
-
+    utt.onstart = () => { isSpeaking.current = true; mouthTarget.current = 0.22; };
     utt.onend = utt.onerror = () => {
-      isSpeaking.current  = false;
-      mouthTarget.current = 0;
+      isSpeaking.current = false; mouthTarget.current = 0;
       if (wordTimerRef.current) { clearTimeout(wordTimerRef.current); wordTimerRef.current = null; }
     };
 
     window.speechSynthesis.speak(utt);
   }, [stopSpeaking]);
 
-  /* ── init ── */
   useEffect(() => {
     let cancelled = false;
 
@@ -158,56 +130,59 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
       if (!el) return;
 
       try {
-        setLoadMsg("Loading PixiJS…"); setProgress(10);
+        setLoadMsg("Loading PixiJS..."); setProgress(10);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await loadScript(PIXI_URL, () => !!(window as any).PIXI?.Application);
         if (cancelled) return;
 
-        setLoadMsg("Loading Cubism 2 runtime…"); setProgress(25);
+        setLoadMsg("Loading Cubism 2..."); setProgress(25);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await loadScript(CUBISM2_URL, () => !!(window as any).Live2D);
         if (cancelled) return;
 
-        setLoadMsg("Loading Cubism 4 runtime…"); setProgress(40);
+        setLoadMsg("Loading Cubism 4..."); setProgress(40);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await loadScript(CUBISM4_URL, () => !!(window as any).Live2DCubismCore);
         if (cancelled) return;
 
-        setLoadMsg("Loading Live2D display…"); setProgress(55);
+        setLoadMsg("Loading Live2D..."); setProgress(55);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await loadScript(LIVE2D_DISP_URL, () => !!(window as any).PIXI?.live2d?.Live2DModel);
         if (cancelled) return;
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const PIXI      = (window as any).PIXI;
+        const PIXI = (window as any).PIXI;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Live2DModel = (window as any).PIXI?.live2d?.Live2DModel as any;
-        if (!Live2DModel) throw new Error("pixi-live2d-display did not expose window.PIXI.live2d.Live2DModel");
-
+        if (!Live2DModel) throw new Error("pixi-live2d-display did not load");
         Live2DModel.registerTicker(PIXI.Ticker);
 
-        setLoadMsg("Creating renderer…"); setProgress(65);
+        setLoadMsg("Creating renderer..."); setProgress(65);
 
-        const w = el.clientWidth  || 400;
-        const h = el.clientHeight || 600;
+        const w = el.clientWidth  || 380;
+        const h = el.clientHeight || 500;
 
         const app = new PIXI.Application({
           backgroundAlpha:   0,
-          clearBeforeRender: false,
-          width:  w,
-          height: h,
-          antialias:   true,
-          resolution:  Math.min(window.devicePixelRatio ?? 1, 2),
+          width: w, height: h,
+          antialias: true,
+          resolution: Math.min(window.devicePixelRatio ?? 1, 2),
           autoDensity: true,
         });
 
-        // Clear any orphaned canvas from previous mount (React StrictMode / HMR)
         el.innerHTML = "";
         el.appendChild(app.view);
+        // Ensure the canvas fills the container and clips
+        const canvas = app.view as HTMLCanvasElement;
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.objectFit = "contain";
+        canvas.style.display = "block";
+
         appRef.current = app;
         if (cancelled) { app.destroy(true); return; }
 
-        setLoadMsg("Fetching model…"); setProgress(78);
+        setLoadMsg("Loading model..."); setProgress(78);
 
         const model = await Live2DModel.from(MODEL_URL, { autoInteract: false });
         if (cancelled) { app.destroy(true); return; }
@@ -215,13 +190,13 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
         setProgress(92);
         app.stage.addChild(model);
 
-        // Guard: model dimensions must be valid
-        const mw = model.width  || 400;
+        // Scale model to fit, center it, with a bit of bottom bias for portraits
+        const mw = model.width || 400;
         const mh = model.height || 600;
-        const scale = Math.min(w / mw, h / mh) * 0.92;
+        const scale = Math.min(w / mw, h / mh) * 0.88;
         model.scale.set(scale);
         model.anchor.set(0.5, 0.5);
-        model.position.set(w / 2, h / 2);
+        model.position.set(w / 2, h / 2 + 10);
 
         el.addEventListener("pointermove", (e: PointerEvent) => {
           const r = el.getBoundingClientRect();
@@ -230,26 +205,22 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
 
         modelRef.current = model;
 
-        // ── Idle motion loop ─────────────────────────────────────────────
+        // Idle motion loop
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mm = model.internalModel.motionManager as any;
         const playIdle = () => { try { model.motion("Idle"); } catch { /**/ } };
         playIdle();
         mm.on?.("motionFinish", () => { if (!cancelled) playIdle(); });
 
-        // ── Lip-sync: LOW-priority ticker ────────────────────────────────
-        // Runs after the motion system each frame, writes smoothed mouth value.
-        // Works for both Cubism 2 and Cubism 4 (pixi-live2d-display@0.4.0
-        // calls coreModel.update() inside internalModel.update at NORMAL priority,
-        // so our LOW write here is still the last write before the renderer).
+        // Lip-sync ticker (LOW priority = runs after motion system)
         app.ticker.add(() => {
-            const tgt = isSpeaking.current ? mouthTarget.current : 0;
-            const lf  = mouthSmooth.current < tgt ? 0.32 : 0.10;
-            mouthSmooth.current += (tgt - mouthSmooth.current) * lf;
-            if (mouthSmooth.current > 0.005 || tgt > 0) {
-              writeMouthParam(modelRef.current, mouthSmooth.current);
-            }
-          }, null, PIXI.UPDATE_PRIORITY.LOW);
+          const tgt = isSpeaking.current ? mouthTarget.current : 0;
+          const lf = mouthSmooth.current < tgt ? 0.35 : 0.12;
+          mouthSmooth.current += (tgt - mouthSmooth.current) * lf;
+          if (isSpeaking.current || mouthSmooth.current > 0.005) {
+            writeMouthParam(modelRef.current, mouthSmooth.current);
+          }
+        }, null, PIXI.UPDATE_PRIORITY.LOW);
 
         setProgress(100);
         setLoading(false);
@@ -258,83 +229,68 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.error("[AvatarDisplay] init failed:", msg);
-        if (!cancelled) {
-          setErrMsg(msg);
-          setFallback(true);
-          setLoading(false);
-          onReady?.(() => {});
-        }
+        if (!cancelled) { setErrMsg(msg); setFallback(true); setLoading(false); onReady?.(() => {}); }
       }
     }
 
     boot();
-
     return () => {
-      cancelled = true;
-      stopSpeaking();
+      cancelled = true; stopSpeaking();
       try { appRef.current?.destroy(true, { children: true, texture: true }); } catch { /**/ }
     };
   }, [onReady, speak, stopSpeaking]);
 
-  /* ── render ── */
   return (
-    <div className="relative w-full aspect-[4/5] lg:aspect-auto lg:h-[600px] rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/10 border border-white/50 bg-gradient-to-br from-violet-50/60 to-indigo-50/60 backdrop-blur-sm transition-all duration-500 hover:shadow-violet-500/20">
-
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Canvas mount — clipped to container */}
       <div
         ref={mountRef}
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full overflow-hidden"
         style={{ display: loading || fallback ? "none" : "block" }}
       />
 
-      {/* ── Fallback ── */}
+      {/* Fallback */}
       {fallback && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-violet-50 via-indigo-50 to-blue-50 p-6">
-          <div className="relative mb-5">
-            <div className="w-36 h-36 rounded-full bg-gradient-to-br from-violet-500 via-indigo-600 to-blue-600 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-violet-500/40">
-              {config.profile.initials}
-            </div>
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white text-3xl font-black shadow-2xl shadow-slate-500/30 mb-4">
+            {config.profile.initials}
           </div>
-          <p className="text-2xl font-bold text-slate-800">{config.profile.name}</p>
-          <p className="text-violet-600 font-semibold">{config.profile.title}</p>
-          <p className="text-slate-400 text-sm mt-0.5">{config.profile.company} · {config.profile.location}</p>
-          {errMsg && (
-            <p className="text-xs text-red-400 mt-3 max-w-[240px] text-center break-words">⚠ {errMsg}</p>
-          )}
+          <p className={`text-lg font-bold ${darkMode ? "text-white" : "text-slate-800"}`}>{config.profile.name}</p>
+          <p className={`text-sm ${darkMode ? "text-slate-300" : "text-slate-600"}`}>{config.profile.title}</p>
+          {errMsg && <p className="text-[10px] text-red-400 mt-2 max-w-[200px] text-center">{errMsg}</p>}
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* Loading */}
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 rounded-3xl z-20">
-          <div className="relative mb-5">
-            <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="34" fill="none" stroke="#e8e5ff" strokeWidth="7" />
+        <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 ${
+          darkMode ? "bg-[#071318]/80 backdrop-blur-sm" : "bg-white/90"
+        }`}>
+          <div className="relative mb-4">
+            <svg className="w-14 h-14 -rotate-90" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="34" fill="none" stroke={darkMode ? "rgba(255,255,255,0.06)" : "#e8e5ff"} strokeWidth="6" />
               <circle
                 cx="40" cy="40" r="34" fill="none"
-                stroke="url(#ring-grad)" strokeWidth="7" strokeLinecap="round"
+                stroke="url(#ring-grad-av)" strokeWidth="6" strokeLinecap="round"
                 strokeDasharray={`${2 * Math.PI * 34 * progress / 100} 999`}
                 className="transition-all duration-300"
               />
               <defs>
-                <linearGradient id="ring-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%"   stopColor="#7c4dff" />
-                  <stop offset="100%" stopColor="#4f8af8" />
+                <linearGradient id="ring-grad-av" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#475569" />
+                  <stop offset="100%" stopColor="#64748b" />
                 </linearGradient>
               </defs>
             </svg>
-            <div className="absolute inset-0 flex items-center justify-center text-violet-700 text-lg font-black">
-              {progress}%
-            </div>
+            <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${
+              darkMode ? "text-slate-300" : "text-slate-700"
+            }`}>{progress}%</div>
           </div>
-          <p className="text-sm font-bold text-slate-700 tracking-wide">Loading Avatar</p>
-          <p className="text-xs text-slate-400 mt-1">{loadMsg}</p>
-          <div className="mt-5 flex gap-1.5 items-end h-5">
-            {[0.6, 1, 0.75, 1.1, 0.5, 0.9, 0.65].map((h, i) => (
-              <span
-                key={i}
-                className="w-1.5 rounded-full bg-violet-400 animate-bounce"
-                style={{ height: `${h * 18}px`, animationDelay: `${i * 0.07}s`, animationDuration: "0.7s" }}
-              />
+          <p className={`text-xs font-semibold ${darkMode ? "text-slate-300/80" : "text-slate-600"}`}>{loadMsg}</p>
+          <div className="mt-3 flex gap-1 items-end h-4">
+            {[0.5, 0.8, 0.6, 1, 0.4].map((h, i) => (
+              <span key={i} className="w-1 rounded-full bg-slate-400/70 animate-bounce"
+                style={{ height: `${h * 12}px`, animationDelay: `${i * 0.06}s`, animationDuration: "0.6s" }} />
             ))}
           </div>
         </div>

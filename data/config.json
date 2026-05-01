@@ -127,8 +127,8 @@
   },
 
   "nav": {
-    "brand": "DevSan",
-    "brandInitials": "DS",
+    "brand": "Sandip",
+    "brandInitials": "SP",
     "links": [
       { "name": "Home", "path": "/" },
       { "name": "Experience", "path": "/experience" },

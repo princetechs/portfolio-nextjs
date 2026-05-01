@@ -9,13 +9,13 @@ export const metadata: Metadata = {
 };
 
 const ICON_COLORS: Record<string, string> = {
-  violet: "from-violet-600 to-indigo-600",
+  violet: "from-cyan-600 to-teal-600",
   blue: "from-blue-600 to-cyan-600",
   green: "from-green-600 to-emerald-600",
 };
 
 const SKILL_COLORS: Record<string, string> = {
-  violet: "bg-violet-600",
+  violet: "bg-cyan-600",
   blue: "bg-blue-600",
   green: "bg-green-600",
 };
@@ -78,7 +78,7 @@ export default function ExperiencePage() {
                     <h3 className="text-xl font-bold text-slate-900 mb-1">
                       {job.title}
                     </h3>
-                    <p className="text-violet-600 font-semibold mb-1">
+                    <p className="text-cyan-600 font-semibold mb-1">
                       {job.company}
                     </p>
                     <p className="text-slate-400 text-sm mb-4">{job.period}</p>
@@ -89,7 +89,7 @@ export default function ExperiencePage() {
                       <ul className="space-y-2 mb-5">
                         {(job.achievements as string[]).map((ach, j) => (
                           <li key={j} className="flex items-start gap-2 text-sm text-slate-600">
-                            <span className="text-violet-500 mt-0.5 shrink-0">▸</span>
+                            <span className="text-cyan-500 mt-0.5 shrink-0">▸</span>
                             {ach}
                           </li>
                         ))}
@@ -101,7 +101,7 @@ export default function ExperiencePage() {
                       {job.technologies.map((tech) => (
                         <span
                           key={tech}
-                          className="px-2.5 py-0.5 text-xs rounded-full bg-violet-50 text-violet-700 border border-violet-100 font-medium"
+                          className="px-2.5 py-0.5 text-xs rounded-full bg-cyan-50 text-cyan-700 border border-violet-100 font-medium"
                         >
                           {tech}
                         </span>
@@ -149,7 +149,7 @@ export default function ExperiencePage() {
                       <span className="text-sm font-medium text-slate-700">
                         {skill.name}
                       </span>
-                      <span className="text-sm font-semibold text-violet-600">
+                      <span className="text-sm font-semibold text-cyan-600">
                         {skill.level}%
                       </span>
                     </div>
