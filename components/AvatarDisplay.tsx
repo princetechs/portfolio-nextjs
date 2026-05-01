@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import config from "@/lib/config";
 
 const PIXI_URL        = "https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js";
 const CUBISM2_URL     = "https://cdn.jsdelivr.net/gh/dylanNew/live2d@master/webgl/Live2D/lib/live2d.min.js";
@@ -290,12 +291,12 @@ export default function AvatarDisplay({ onReady }: AvatarDisplayProps) {
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-violet-50 via-indigo-50 to-blue-50 p-6">
           <div className="relative mb-5">
             <div className="w-36 h-36 rounded-full bg-gradient-to-br from-violet-500 via-indigo-600 to-blue-600 flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-violet-500/40">
-              SP
+              {config.profile.initials}
             </div>
           </div>
-          <p className="text-2xl font-bold text-slate-800">Sandip Parida</p>
-          <p className="text-violet-600 font-semibold">Full-Stack Developer</p>
-          <p className="text-slate-400 text-sm mt-0.5">BetaCraft · Pune, India</p>
+          <p className="text-2xl font-bold text-slate-800">{config.profile.name}</p>
+          <p className="text-violet-600 font-semibold">{config.profile.title}</p>
+          <p className="text-slate-400 text-sm mt-0.5">{config.profile.company} · {config.profile.location}</p>
           {errMsg && (
             <p className="text-xs text-red-400 mt-3 max-w-[240px] text-center break-words">⚠ {errMsg}</p>
           )}

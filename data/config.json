@@ -1,0 +1,144 @@
+{
+  "profile": {
+    "name": "Sandip Parida",
+    "firstName": "Sandip",
+    "initials": "SP",
+    "title": "Full-Stack Developer",
+    "company": "BetaCraft",
+    "companyFull": "BetaCraft Technologies",
+    "location": "Pune, India",
+    "timezone": "IST",
+    "email": "sandip@betacraft.io",
+    "github": "https://github.com/sandipparida",
+    "githubHandle": "sandipparida",
+    "linkedin": "",
+    "resumeUrl": ""
+  },
+
+  "availability": {
+    "status": "available",
+    "label": "Open to new opportunities",
+    "badgeText": "Available",
+    "hireable": true,
+    "openTo": ["full-time", "freelance", "consulting"],
+    "schedulingMessage": "I'd love to connect! Please reach me via GitHub or email and I'll get back to you quickly."
+  },
+
+  "hero": {
+    "headline": "Hi, I'm Sandip",
+    "subheadline": "Full-Stack Developer building AI-powered products at BetaCraft. Passionate about Rails, React, and shipping things that matter.",
+    "greeting": "Hi! I'm Sandip — a full-stack developer passionate about Rails and AI. Ask me anything!",
+    "skillPills": ["Rails", "React", "Python", "Next.js", "AI/LLMs", "Docker"]
+  },
+
+  "chat": {
+    "botName": "DevSan AI",
+    "botSubtitle": "Sandip's AI persona · Full-Stack Dev",
+    "welcomeMessage": "Hi! I'm DevSan — Sandip's AI persona. Ask me anything about his experience, projects, or skills. What would you like to know?",
+    "quickActions": [
+      { "label": "Tech Stack", "message": "What's your tech stack?" },
+      { "label": "Experience", "message": "Tell me about your work experience" },
+      { "label": "Projects", "message": "What projects have you worked on?" },
+      { "label": "Availability", "message": "Are you available for new opportunities?" },
+      { "label": "Schedule Meet", "message": "I'd like to schedule a meeting with you" }
+    ],
+    "fallbackResponses": [
+      "Hey! I'm Sandip, a full-stack dev passionate about Rails and AI. What would you like to know?",
+      "Hi there! I specialize in building scalable web apps with Rails. Ask me anything!",
+      "Hello! I've been working with Rails for 3+ years, currently building AI platforms. How can I help?"
+    ],
+    "persona": {
+      "maxTokens": 512,
+      "maxMessageLength": 1000,
+      "historyLength": 10,
+      "rules": [
+        "Be conversational, warm, and professional",
+        "Keep responses SHORT (30-60 words usually)",
+        "Always end with a relevant emoji",
+        "If asked about something not in your knowledge, say you're not sure but invite them to ask about projects or experience",
+        "Never break character — you ARE Sandip"
+      ]
+    },
+    "llm": {
+      "providers": [
+        {
+          "id": "groq",
+          "type": "openai-compatible",
+          "envKey": "GROQ_API_KEY",
+          "baseUrl": "https://api.groq.com/openai/v1",
+          "model": "llama-3.3-70b-versatile",
+          "envModel": "GROQ_MODEL"
+        },
+        {
+          "id": "heroku",
+          "type": "openai-compatible",
+          "envKey": "HEROKU_INFERENCE_KEY",
+          "envBaseUrl": "HEROKU_INFERENCE_URL",
+          "baseUrl": "https://us.inference.heroku.com/v1",
+          "model": "gpt-oss-120b",
+          "envModel": "HEROKU_MODEL"
+        },
+        {
+          "id": "openai",
+          "type": "openai-compatible",
+          "envKey": "OPENAI_API_KEY",
+          "baseUrl": "https://api.openai.com/v1",
+          "model": "gpt-4o-mini",
+          "envModel": "OPENAI_MODEL"
+        },
+        {
+          "id": "together",
+          "type": "openai-compatible",
+          "envKey": "TOGETHER_API_KEY",
+          "baseUrl": "https://api.together.xyz/v1",
+          "model": "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          "envModel": "TOGETHER_MODEL"
+        },
+        {
+          "id": "openrouter",
+          "type": "openai-compatible",
+          "envKey": "OPENROUTER_API_KEY",
+          "baseUrl": "https://openrouter.ai/api/v1",
+          "model": "meta-llama/llama-3.3-70b-instruct",
+          "envModel": "OPENROUTER_MODEL"
+        },
+        {
+          "id": "cerebras",
+          "type": "openai-compatible",
+          "envKey": "CEREBRAS_API_KEY",
+          "baseUrl": "https://api.cerebras.ai/v1",
+          "model": "llama-3.3-70b",
+          "envModel": "CEREBRAS_MODEL"
+        },
+        {
+          "id": "anthropic",
+          "type": "anthropic",
+          "envKey": "ANTHROPIC_API_KEY",
+          "model": "claude-sonnet-4-6",
+          "envModel": "ANTHROPIC_MODEL"
+        }
+      ]
+    }
+  },
+
+  "rateLimit": {
+    "windowMs": 60000,
+    "maxRequests": 20
+  },
+
+  "nav": {
+    "brand": "DevSan",
+    "brandInitials": "DS",
+    "links": [
+      { "name": "Home", "path": "/" },
+      { "name": "Experience", "path": "/experience" },
+      { "name": "Projects", "path": "/projects" },
+      { "name": "GitHub", "path": "https://github.com/sandipparida", "external": true }
+    ],
+    "ctaLabel": "Let's Talk"
+  },
+
+  "footer": {
+    "text": "Built with Next.js & ❤️ by Sandip Parida"
+  }
+}

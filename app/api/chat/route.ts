@@ -1,17 +1,15 @@
+export const runtime = "edge";
+
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { streamText } from "ai";
 import { buildSystemPrompt } from "@/lib/knowledge-base";
 import { checkRateLimit } from "@/lib/rate-limiter";
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { getConversation, saveConversation } from "@/lib/conversation-store";
+import { getModel, getProviderName, getMaxTokens } from "@/lib/llm-provider";
+import config from "@/lib/config";
 
 const SYSTEM_PROMPT = buildSystemPrompt();
-
-// In-memory conversation history (per process — stateless between deploys)
-// For multi-user persistence use a session store or DB
-const conversationStore = new Map<string, Anthropic.MessageParam[]>();
+const { persona, fallbackResponses } = config.chat;
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -22,8 +20,32 @@ function getClientIp(req: NextRequest): string {
 }
 
 export async function POST(req: NextRequest) {
+  let body: { message?: string; sessionId?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const message = body.message?.trim();
+  if (!message) {
+    return NextResponse.json({ error: "Message cannot be empty" }, { status: 400 });
+  }
+  if (message.length > persona.maxMessageLength) {
+    return NextResponse.json(
+      { error: `Message too long (max ${persona.maxMessageLength} chars)` },
+      { status: 400 }
+    );
+  }
+
   const ip = getClientIp(req);
-  const rateLimit = checkRateLimit(ip);
+  const sessionKey = body.sessionId ?? ip;
+
+  // ── Parallel: rate limit + conversation history ──
+  const [rateLimit, history] = await Promise.all([
+    checkRateLimit(ip),
+    getConversation(sessionKey),
+  ]);
 
   if (!rateLimit.allowed) {
     return NextResponse.json(
@@ -43,80 +65,39 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  let body: { message?: string; sessionId?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
-  const message = body.message?.trim();
-  if (!message) {
-    return NextResponse.json({ error: "Message cannot be empty" }, { status: 400 });
-  }
-  if (message.length > 1000) {
-    return NextResponse.json(
-      { error: "Message too long (max 1000 chars)" },
-      { status: 400 }
-    );
-  }
-
-  // Session-based conversation history (keyed by IP for simplicity)
-  const sessionKey = body.sessionId ?? ip;
-  const history = conversationStore.get(sessionKey) ?? [];
-
-  // Add user message
-  const updatedHistory: Anthropic.MessageParam[] = [
-    ...history,
-    { role: "user", content: message },
+  const messages = [
+    ...history.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    { role: "user" as const, content: message },
   ];
 
-  // Keep last 10 messages to stay within context limits
-  const trimmedHistory = updatedHistory.slice(-10);
-
   try {
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 512,
+    const result = streamText({
+      model: getModel(),
+      maxOutputTokens: getMaxTokens(),
       system: SYSTEM_PROMPT,
-      messages: trimmedHistory,
+      messages,
+      onFinish: async ({ text }) => {
+        // Save conversation after stream completes (fire-and-forget)
+        if (text) {
+          saveConversation(sessionKey, [
+            ...messages,
+            { role: "assistant" as const, content: text },
+          ]).catch((e) => console.error("Failed to save conversation:", e));
+        }
+      },
     });
 
-    const replyContent = response.content[0];
-    if (replyContent.type !== "text") {
-      throw new Error("Unexpected response type from Claude");
-    }
-
-    const reply = replyContent.text;
-
-    // Persist history with assistant reply
-    conversationStore.set(sessionKey, [
-      ...trimmedHistory,
-      { role: "assistant", content: reply },
-    ]);
-
-    return NextResponse.json(
-      { response: reply, status: "success" },
-      {
-        headers: {
-          "X-RateLimit-Remaining": String(rateLimit.remaining),
-          "X-RateLimit-Reset": String(rateLimit.resetAt),
-        },
-      }
-    );
+    return result.toTextStreamResponse({
+      headers: {
+        "X-RateLimit-Remaining": String(rateLimit.remaining),
+        "X-RateLimit-Reset": String(rateLimit.resetAt),
+      },
+    });
   } catch (err) {
-    const error = err as Error;
-    console.error("Chat API error:", error.message);
-
-    const fallbacks = [
-      "Hey! I'm Sandip, a full-stack dev passionate about Rails and AI. What would you like to know? 😊",
-      "Hi there! I specialize in building scalable web apps with Rails. Ask me anything! 👋",
-      "Hello! I've been working with Rails for 3+ years, currently building AI platforms. How can I help? 😀",
-    ];
-
+    console.error("Chat API error:", (err as Error).message);
     return NextResponse.json(
       {
-        response: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+        response: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
         status: "fallback",
       },
       { status: 200 }
@@ -126,9 +107,10 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const ip = getClientIp(req);
-  const result = checkRateLimit(ip);
+  const result = await checkRateLimit(ip);
   return NextResponse.json({
     status: "ok",
+    provider: getProviderName(),
     remaining: result.remaining,
     resetAt: result.resetAt,
   });

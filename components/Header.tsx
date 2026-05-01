@@ -3,17 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import config from "@/lib/config";
 
-const navItems = [
-  { name: "Home", path: "/" },
-  { name: "Experience", path: "/experience" },
-  { name: "Projects", path: "/projects" },
-  {
-    name: "GitHub",
-    path: "https://github.com/sandipparida",
-    external: true,
-  },
-];
+const { nav, profile } = config;
+const navItems = nav.links;
 
 export default function Header() {
   const pathname = usePathname();
@@ -28,10 +21,10 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="group flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-violet-500/20 group-hover:shadow-violet-500/30 transition-all duration-300">
-              DS
+              {nav.brandInitials}
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">
-              DevSan
+              {nav.brand}
             </span>
           </Link>
 
@@ -63,10 +56,10 @@ export default function Header() {
               )
             )}
             <a
-              href="mailto:sandip@betacraft.io"
+              href={`mailto:${profile.email}`}
               className="ml-4 px-5 py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold shadow-md shadow-violet-500/20 hover:shadow-lg hover:shadow-violet-500/30 hover:-translate-y-0.5 transition-all duration-200"
             >
-              Let&apos;s Talk
+              {nav.ctaLabel}
             </a>
           </div>
 

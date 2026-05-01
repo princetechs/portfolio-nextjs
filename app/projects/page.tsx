@@ -1,9 +1,10 @@
 import projectsData from "@/data/projects.json";
+import config from "@/lib/config";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Projects – DevSan Portfolio",
-  description: "Featured projects and open-source work by Sandip Parida",
+  title: `Projects – ${config.nav.brand} Portfolio`,
+  description: `Featured projects and open-source work by ${config.profile.name}`,
 };
 
 export default function ProjectsPage() {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import config from "@/lib/config";
 
 interface Message {
   id: string;
@@ -13,29 +14,17 @@ interface ChatInterfaceProps {
   onAiResponse?: (text: string) => void;
 }
 
-const QUICK_ACTIONS = [
-  { label: "Tech Stack", message: "What's your tech stack?" },
-  { label: "Experience", message: "Tell me about your work experience" },
-  { label: "Projects", message: "What projects have you worked on?" },
-  { label: "Availability", message: "Are you available for new opportunities?" },
-  { label: "Schedule Meet", message: "I'd like to schedule a meeting with you" },
-];
+const { chat, nav } = config;
 
 export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Hi! I'm DevSan — Sandip's AI persona. Ask me anything about his experience, projects, or skills. What would you like to know?",
-    },
+    { id: "welcome", role: "assistant", content: chat.welcomeMessage },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [rateLimited, setRateLimited] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const chipsRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -55,6 +44,8 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
       setInput("");
       setLoading(true);
 
+      const assistantMsgId = (Date.now() + 1).toString();
+
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
@@ -67,32 +58,53 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
           const data = await res.json();
           setMessages((prev) => [
             ...prev,
-            {
-              id: Date.now().toString(),
-              role: "assistant",
-              content: data.error ?? "Too many messages — please wait a moment before trying again.",
-              isError: true,
-            },
+            { id: assistantMsgId, role: "assistant", content: data.error ?? "Too many messages — please wait.", isError: true },
           ]);
           return;
         }
 
         if (!res.ok) throw new Error("Server error");
 
-        const data = await res.json();
-        const reply = data.response as string;
-        setMessages((prev) => [...prev, { id: Date.now().toString(), role: "assistant", content: reply }]);
-        onAiResponse?.(reply);
-        setRateLimited(false);
+        // ── Stream text response from AI SDK's toTextStreamResponse ──
+        if (res.body) {
+          setMessages((prev) => [
+            ...prev,
+            { id: assistantMsgId, role: "assistant", content: "" },
+          ]);
+          setLoading(false);
+
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let fullText = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            fullText += chunk;
+            const currentText = fullText;
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMsgId ? { ...msg, content: currentText } : msg
+              )
+            );
+          }
+
+          if (fullText) onAiResponse?.(fullText);
+          setRateLimited(false);
+        } else {
+          // Fallback: non-streaming
+          const data = await res.json();
+          setMessages((prev) => [
+            ...prev,
+            { id: assistantMsgId, role: "assistant", content: data.response },
+          ]);
+          onAiResponse?.(data.response);
+        }
       } catch {
         setMessages((prev) => [
           ...prev,
-          {
-            id: Date.now().toString(),
-            role: "assistant",
-            content: "Sorry, something went wrong. Please try again!",
-            isError: true,
-          },
+          { id: (Date.now() + 2).toString(), role: "assistant", content: "Sorry, something went wrong. Please try again!", isError: true },
         ]);
       } finally {
         setLoading(false);
@@ -118,13 +130,13 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-sm font-black shadow-md shadow-violet-500/20">
-              DS
+              {nav.brandInitials}
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-green-500 border-2 border-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-slate-900 leading-none">DevSan AI</p>
-            <p className="text-xs text-slate-400 mt-0.5 truncate">Sandip&apos;s AI persona · Full-Stack Dev</p>
+            <p className="text-sm font-bold text-slate-900 leading-none">{chat.botName}</p>
+            <p className="text-xs text-slate-400 mt-0.5 truncate">{chat.botSubtitle}</p>
           </div>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-100 shrink-0">
             <span className="relative flex h-2 w-2">
@@ -145,7 +157,7 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
           >
             {msg.role === "assistant" && (
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black shrink-0 mt-0.5 shadow-sm shadow-violet-500/20">
-                DS
+                {nav.brandInitials}
               </div>
             )}
             <div
@@ -170,7 +182,7 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
         {loading && (
           <div className="flex gap-2.5 justify-start">
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black shrink-0 mt-0.5 shadow-sm shadow-violet-500/20">
-              DS
+              {nav.brandInitials}
             </div>
             <div className="bg-white border border-slate-200/80 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
               <div className="flex gap-1.5 items-center h-4">
@@ -196,11 +208,10 @@ export default function ChatInterface({ onAiResponse }: ChatInterfaceProps) {
 
       {/* Quick actions */}
       <div
-        ref={chipsRef}
         className="px-4 pt-3 pb-2 flex gap-2 overflow-x-auto shrink-0 scrollbar-none"
         style={{ scrollbarWidth: "none" }}
       >
-        {QUICK_ACTIONS.map((action) => (
+        {chat.quickActions.map((action) => (
           <button
             key={action.label}
             onClick={() => sendMessage(action.message)}

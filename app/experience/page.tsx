@@ -1,10 +1,11 @@
 import experienceData from "@/data/experience.json";
 import skillsData from "@/data/skills.json";
+import config from "@/lib/config";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Experience – DevSan Portfolio",
-  description: "Professional journey, skills and achievements of Sandip Parida",
+  title: `Experience – ${config.nav.brand} Portfolio`,
+  description: `Professional journey, skills and achievements of ${config.profile.name}`,
 };
 
 const ICON_COLORS: Record<string, string> = {

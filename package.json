@@ -9,7 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.73",
+    "@ai-sdk/openai-compatible": "^2.0.43",
+    "@ai-sdk/react": "^3.0.174",
     "@anthropic-ai/sdk": "^0.92.0",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "ai": "^6.0.172",
     "next": "16.2.4",
     "pixi-live2d-display": "^0.4.0",
     "pixi.js": "^6.5.10",

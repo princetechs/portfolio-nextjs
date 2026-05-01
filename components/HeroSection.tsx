@@ -4,8 +4,9 @@ import { useCallback, useRef } from "react";
 import Link from "next/link";
 import AvatarDisplay from "./AvatarDisplay";
 import ChatInterface from "./ChatInterface";
+import config from "@/lib/config";
 
-const SKILLS = ["Rails", "React", "Python", "Next.js", "AI/LLMs", "Docker"];
+const { profile, availability, hero } = config;
 
 function cleanForSpeech(text: string) {
   return text
@@ -25,8 +26,7 @@ export default function HeroSection() {
 
   const handleAvatarReady = useCallback((speak: (text: string) => void) => {
     speakFnRef.current = speak;
-    const greet = () =>
-      speak("Hi! I'm Sandip — a full-stack developer passionate about Rails and AI. Ask me anything!");
+    const greet = () => speak(hero.greeting);
     if (window.speechSynthesis.getVoices().length) {
       greet();
     } else {
@@ -87,16 +87,16 @@ export default function HeroSection() {
               <div className="mt-6 bg-white rounded-2xl border border-slate-200/70 p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="font-bold text-slate-900 text-sm leading-none">Sandip Parida</p>
-                    <p className="text-xs text-slate-500 mt-1">Full-Stack Developer · BetaCraft, Pune</p>
+                    <p className="font-bold text-slate-900 text-sm leading-none">{profile.name}</p>
+                    <p className="text-xs text-slate-500 mt-1">{profile.title} · {profile.company}, {profile.location.split(",")[0]}</p>
                   </div>
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                    <span className="text-[11px] font-semibold text-emerald-700">Available</span>
+                    <span className="text-[11px] font-semibold text-emerald-700">{availability.badgeText}</span>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {SKILLS.map((s) => (
+                  {hero.skillPills.map((s) => (
                     <span key={s} className="px-2.5 py-1 bg-slate-50 text-slate-600 text-[11px] font-medium rounded-lg border border-slate-200">
                       {s}
                     </span>
@@ -104,7 +104,7 @@ export default function HeroSection() {
                 </div>
                 <div className="flex gap-2 mt-4">
                   <a
-                    href="mailto:sandip@betacraft.io"
+                    href={`mailto:${profile.email}`}
                     className="flex-1 text-center py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl hover:opacity-90 transition-opacity shadow-sm shadow-violet-500/20"
                   >
                     Hire Me
@@ -127,17 +127,16 @@ export default function HeroSection() {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-50 border border-violet-200 rounded-full mb-4">
                 <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
-                <span className="text-xs font-semibold text-violet-700">Open to new opportunities</span>
+                <span className="text-xs font-semibold text-violet-700">{availability.label}</span>
               </div>
               <h1 className="text-4xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
-                Hi, I&apos;m{" "}
+                {hero.headline.replace(profile.firstName, "").trim()}{" "}
                 <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
-                  Sandip
+                  {profile.firstName}
                 </span>
               </h1>
               <p className="mt-3 text-lg text-slate-500 leading-relaxed max-w-xl">
-                Full-Stack Developer building AI-powered products at{" "}
-                <span className="text-slate-700 font-medium">BetaCraft</span>. Passionate about Rails, React, and shipping things that matter.
+                {hero.subheadline}
               </p>
               <div className="flex flex-wrap gap-3 mt-5">
                 <Link
@@ -150,7 +149,7 @@ export default function HeroSection() {
                   </svg>
                 </Link>
                 <a
-                  href="https://github.com/sandipparida"
+                  href={profile.github}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 text-sm font-semibold hover:border-violet-300 hover:text-violet-700 hover:bg-violet-50 transition-all duration-200 shadow-sm"

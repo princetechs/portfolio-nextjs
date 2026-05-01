@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import config from "@/lib/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,13 +15,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DevSan Portfolio",
-  description:
-    "Sandip Parida – Full-Stack Developer. Rails, Python, React & AI. Ask me anything via the AI chat!",
-  keywords: ["Ruby on Rails", "React", "AI", "LLMs", "Full Stack Developer"],
+  title: `${config.nav.brand} Portfolio`,
+  description: `${config.profile.name} – ${config.profile.title}. ${config.hero.subheadline}`,
+  keywords: [...config.hero.skillPills, config.profile.title],
   openGraph: {
-    title: "DevSan Portfolio",
-    description: "Full-Stack Developer passionate about Rails & AI",
+    title: `${config.nav.brand} Portfolio`,
+    description: `${config.profile.title} passionate about building great products`,
     type: "website",
   },
 };
@@ -39,10 +39,7 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <footer className="py-6 text-center text-sm text-slate-500 border-t border-slate-200/60 bg-white/50 backdrop-blur-sm">
-          <p>
-            Built with Next.js &amp; ❤️ by{" "}
-            <span className="text-violet-600 font-semibold">Sandip Parida</span>
-          </p>
+          <p>{config.footer.text}</p>
         </footer>
 
       </body>
