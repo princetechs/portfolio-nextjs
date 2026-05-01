@@ -1,0 +1,75 @@
+[
+  {
+    "id": "betacraft",
+    "title": "Full-Stack Developer",
+    "company": "BetaCraft Technologies (Pune)",
+    "period": "Feb 2024 - Present",
+    "is_current": true,
+    "description": "Building no-code AI platforms, relay proxies, dynamic cost engines, and secure user workflows across large-scale LLM products.",
+    "icon_color": "violet",
+    "technologies": [
+      "Ruby on Rails",
+      "React",
+      "python",
+      "django",
+      "mongoDB",
+      "PostgreSQL",
+      "Redis",
+      "AWS",
+      "Docker",
+      "LLMs",
+      "JWT",
+      "Stripe"
+    ],
+    "achievements": [
+      "Protobots: Built a no-code AI platform for TaskBots/ChatBots with multi-LLM support",
+      "Implemented MFA, dynamic welcome banners, JWT and secure auth flows",
+      "Developed relay proxy to route requests, log usage/costs, and power LLM Functions",
+      "Designed dynamic cost engine, automated receipts, lifecycle management, and performance tuning",
+      "Added activity logs, notifications, email system, and redirect/short-link mechanisms"
+    ]
+  },
+  {
+    "id": "nettantra",
+    "title": "Software Developer",
+    "company": "NetTantra Technologies (Hyscaler), Bhubaneswar",
+    "period": "Nov 2021 - Jun 2023",
+    "is_current": false,
+    "description": "Led migrations to Spree Commerce, integrated logistics/CRM, built payments and automation for healthcare eCommerce.",
+    "icon_color": "blue",
+    "technologies": [
+      "Ruby on Rails",
+      "Spree",
+      "PostgreSQL",
+      "Shippo",
+      "Zoho",
+      "Stripe"
+    ],
+    "achievements": [
+      "Migrated WordPress platforms to Spree serving 5,000+ users",
+      "Integrated Shippo, Zoho CRM, Doctegrity and automated order processing",
+      "Implemented recurring payments, custom business logic, and ActiveMailer notifications",
+      "Delivered two healthcare WordPress apps and an in-house attendance system"
+    ]
+  },
+  {
+    "id": "freelance",
+    "title": "Freelance Developer",
+    "company": "Independent",
+    "period": "6 months",
+    "is_current": false,
+    "description": "Delivered three client projects end-to-end and contributed to open-source (OpenAI ecosystem).",
+    "icon_color": "green",
+    "technologies": [
+      "Ruby on Rails",
+      "Python",
+      "React",
+      "AWS",
+      "Docker"
+    ],
+    "learnings": [
+      "Client-focused delivery and rapid iteration",
+      "Open-source collaboration and community support"
+    ]
+  }
+]

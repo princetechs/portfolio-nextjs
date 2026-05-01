@@ -1,0 +1,52 @@
+[
+  {
+    "id": "backend",
+    "title": "Backend Development",
+    "icon_color": "violet",
+    "icon_type": "code",
+    "skills": [
+      { "name": "Ruby on Rails", "level": 95 },
+      { "name": "Django", "level": 75 },
+      { "name": "PostgreSQL", "level": 90 },
+      { "name": "MongoDB", "level": 70 },
+      { "name": "Redis", "level": 85 }
+    ]
+  },
+  {
+    "id": "frontend",
+    "title": "Frontend Development",
+    "icon_color": "blue",
+    "icon_type": "layout",
+    "skills": [
+      { "name": "React", "level": 85 },
+      { "name": "Tailwind CSS", "level": 90 },
+      { "name": "TypeScript", "level": 80 },
+      { "name": "Stimulus", "level": 75 },
+      { "name": "Three.js", "level": 70 }
+    ]
+  },
+  {
+    "id": "devops",
+    "title": "DevOps & Tools",
+    "icon_color": "green",
+    "icon_type": "server",
+    "skills": [
+      { "name": "AWS (EC2, S3, Lambda, AppRunner, Elastic IP)", "level": 80 },
+      { "name": "Docker", "level": 80 },
+      { "name": "Heroku & Railway", "level": 75 },
+      { "name": "Git", "level": 95 }
+    ]
+  },
+  {
+    "id": "ai",
+    "title": "AI & LLM",
+    "icon_color": "violet",
+    "icon_type": "sparkles",
+    "skills": [
+      { "name": "ruby_llm", "level": 85 },
+      { "name": "langchain.rb", "level": 80 },
+      { "name": "Prompt Engineering", "level": 85 },
+      { "name": "RAG & Embeddings", "level": 75 }
+    ]
+  }
+]

@@ -1,0 +1,74 @@
+[
+  {
+    "title": "Protobots (No-code AI Platform)",
+    "description": "Built TaskBots/ChatBots platform with multi-LLM support, relay proxy, usage/cost tracking, event-driven LLM Functions, activity logs, notifications, emails, and dynamic welcome banners.",
+    "technologies": ["Ruby on Rails", "React", "PostgreSQL", "LLMs", "JWT", "Redis"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "In Production",
+    "featured": true
+  },
+  {
+    "title": "Bectzn (Social Platform)",
+    "description": "End-to-end delivery of a social platform for election enthusiasts with Google Autocomplete, geolocation, Ballotpedia API, Perplexity-generated profiles, and Stripe donations.",
+    "technologies": ["Ruby on Rails", "Stimulus", "PostgreSQL", "Stripe", "Perplexity API"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Launched",
+    "featured": true
+  },
+  {
+    "title": "CraftOs (Web + Desktop)",
+    "description": "Custom HR management platform with role-based auth, notifications, third-party integrations, CI/CD, and Electron desktop app for task tracking.",
+    "technologies": ["Ruby on Rails", "Electron", "PostgreSQL", "Docker"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Launched",
+    "featured": false
+  },
+  {
+    "title": "Lumi-PassPort (Web App)",
+    "description": "Interactive educational platform: React front-end, Rails APIs, admin dashboards, Insendi, Chart.js, PDF rendering, dynamic modals, and digital credentials.",
+    "technologies": ["React", "Ruby on Rails", "Chart.js", "PDF"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Launched",
+    "featured": false
+  },
+  {
+    "title": "AI Carousel Maker",
+    "description": "AI-powered tool to generate team-ready PDF carousels for productivity sharing.",
+    "technologies": ["Ruby", "Python", "LLMs", "PDF"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Completed",
+    "featured": false
+  },
+  {
+    "title": "Age Calculator",
+    "description": "Lightweight utility to compute age with precise date math.",
+    "technologies": ["Python"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Completed",
+    "featured": false
+  },
+  {
+    "title": "Instagram to PDF Generator",
+    "description": "Script to extract Instagram carousel images and generate shareable PDFs.",
+    "technologies": ["Python", "Scraping", "PDF"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Completed",
+    "featured": false
+  },
+  {
+    "title": "MR_PORTFOLIO (3D Portfolio)",
+    "description": "Interactive 3D portfolio built with Three.js and modern web tooling.",
+    "technologies": ["Three.js", "JavaScript", "WebGL"],
+    "github_url": "#",
+    "live_url": "#",
+    "status": "Completed",
+    "featured": false
+  }
+]
