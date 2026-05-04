@@ -45,7 +45,7 @@
     "fallbackResponses": [
       "Hey! I'm Sandip, a full-stack dev passionate about Rails and AI. What would you like to know?",
       "Hi there! I specialize in building scalable web apps with Rails. Ask me anything!",
-      "Hello! I've been working with Rails for 3+ years, currently building AI platforms. How can I help?"
+      "Hello! I've been working with Rails for 4+ years, currently building AI platforms. How can I help?"
     ],
     "persona": {
       "maxTokens": 512,
