@@ -133,7 +133,7 @@ export default function HeroSection() {
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               {[
-                { val: "3+", label: "Years" },
+                { val: "4+", label: "Years" },
                 { val: "8", label: "Projects" },
                 { val: "6+", label: "Stacks" },
               ].map((s) => (
