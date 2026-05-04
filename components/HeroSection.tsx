@@ -6,10 +6,26 @@ import ChatInterface from "./ChatInterface";
 import ExperiencePanel from "./ExperiencePanel";
 import ProjectsPanel from "./ProjectsPanel";
 import config from "@/lib/config";
+import experienceData from "@/data/experience.json";
 
 type View = "home" | "experience" | "projects";
 
 const { profile, availability, hero } = config;
+
+const MONTH_INDEX: Record<string, number> = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+};
 
 function cleanForSpeech(text: string) {
   return text
@@ -23,10 +39,42 @@ function cleanForSpeech(text: string) {
     .trim();
 }
 
+function getExperienceStartDate(period: string) {
+  const match = period.match(/^([A-Za-z]{3})\s+(\d{4})/);
+  if (!match) return null;
+
+  const month = MONTH_INDEX[match[1].toLowerCase()];
+  if (month === undefined) return null;
+
+  return new Date(Date.UTC(Number(match[2]), month, 1));
+}
+
+function getYearsExperienceLabel() {
+  const startDates = experienceData
+    .map((job) => getExperienceStartDate(job.period))
+    .filter((date): date is Date => date !== null);
+
+  if (!startDates.length) return "0+";
+
+  const earliestStart = startDates.reduce((earliest, date) =>
+    date.getTime() < earliest.getTime() ? date : earliest
+  );
+
+  const now = new Date();
+  let years = now.getUTCFullYear() - earliestStart.getUTCFullYear();
+
+  if (now.getUTCMonth() < earliestStart.getUTCMonth()) {
+    years -= 1;
+  }
+
+  return `${Math.max(0, years)}+`;
+}
+
 export default function HeroSection() {
   const speakFnRef = useRef<((text: string) => void) | null>(null);
   const indicatorRef = useRef<HTMLDivElement | null>(null);
   const [activeView, setActiveView] = useState<View>("home");
+  const yearsExperience = getYearsExperienceLabel();
 
   const handleAvatarReady = useCallback((speak: (text: string) => void) => {
     speakFnRef.current = speak;
@@ -133,7 +181,7 @@ export default function HeroSection() {
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               {[
-                { val: "4+", label: "Years" },
+                { val: yearsExperience, label: "Years" },
                 { val: "8", label: "Projects" },
                 { val: "6+", label: "Stacks" },
               ].map((s) => (
