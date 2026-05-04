@@ -9,8 +9,8 @@
     "location": "Pune, India",
     "timezone": "IST",
     "email": "sandip@betacraft.io",
-    "github": "https://github.com/sandipparida",
-    "githubHandle": "sandipparida",
+    "github": "https://github.com/princetechs",
+    "githubHandle": "princetechs",
     "linkedin": "",
     "resumeUrl": ""
   },
@@ -133,7 +133,7 @@
       { "name": "Home", "path": "/" },
       { "name": "Experience", "path": "/experience" },
       { "name": "Projects", "path": "/projects" },
-      { "name": "GitHub", "path": "https://github.com/sandipparida", "external": true }
+      { "name": "GitHub", "path": "https://github.com/princetechs", "external": true }
     ],
     "ctaLabel": "Let's Talk"
   },
